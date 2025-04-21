@@ -1,15 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 import serial
 import serial.tools.list_ports
 import time
-import json
 
 app = Flask(__name__)
 
 # Global variable to store the serial connection
 ser = None
-# Keep track of LED states
-led_states = {"1": False, "2": False, "3": False}
 
 def find_arduino():
     """Try to find the Arduino port"""
@@ -48,8 +45,8 @@ def connect_to_arduino():
         return False
 
 def send_command(command):
-    """Send command to Arduino and update LED state"""
-    global ser, led_states
+    """Send command to Arduino"""
+    global ser
     
     # Try to connect if not connected
     if ser is None or not ser.is_open:
@@ -61,18 +58,13 @@ def send_command(command):
         ser.write(f"{command}\n".encode())
         print(f"Sent command: {command}")
         
-        # Update LED state
-        led_num = command[-1]
-        action = command[:-1]
-        led_states[led_num] = (action == "on")
-        
         # Read response (if any)
         time.sleep(0.1)
         if ser.in_waiting:
             response = ser.readline().decode('utf-8').strip()
             print(f"Arduino response: {response}")
             return response
-        return f"Command sent: {command}"
+        return "Command sent (no response)"
         
     except Exception as e:
         print(f"Error sending command: {e}")
@@ -82,15 +74,13 @@ def send_command(command):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     message = None
-    last_command = None
     
     # Handle button presses
     if request.method == 'POST':
         command = request.form.get('command')
         if command in ['on1', 'off1', 'on2', 'off2', 'on3', 'off3']:
             result = send_command(command)
-            message = result
-            last_command = command
+            message = f"Command '{command}' result: {result}"
         else:
             message = "Invalid command"
     
@@ -101,26 +91,7 @@ def index():
         else:
             message = "Could not connect to Arduino"
     
-    # Redirect with last command as parameter to help update UI
-    if last_command:
-        # Also pass current states of all LEDs
-        return redirect(url_for('index', 
-                               last_command=last_command, 
-                               message=message,
-                               led1=led_states.get("1", False),
-                               led2=led_states.get("2", False),
-                               led3=led_states.get("3", False)))
-    
-    return render_template('index.html', message=message, led_states=json.dumps(led_states))
-
-# Add a status API endpoint
-@app.route('/api/status', methods=['GET'])
-def get_status():
-    is_connected = ser is not None and ser.is_open
-    return {
-        "connected": is_connected,
-        "led_states": led_states
-    }
+    return render_template('index.html', message=message)
 
 if __name__ == '__main__':
     print("Starting Flask application...")
