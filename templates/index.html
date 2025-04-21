@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart LED Control System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --success: #06d6a0;
+            --danger: #ef476f;
+            --warning: #ffd166;
+            --info: #118ab2;
+            --dark: #073b4c;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --bg: #f0f2f5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .status-bar {
+            background-color: var(--white);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success);
+            box-shadow: 0 0 0 3px rgba(6, 214, 160, 0.2);
+        }
+
+        .status-dot.disconnected {
+            background-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 71, 111, 0.2);
+        }
+
+        main {
+            padding: 2rem 0;
+            flex-grow: 1;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .led-icon {
+            font-size: 1.5rem;
+        }
+
+        .led-icon-1 { color: var(--success); }
+        .led-icon-2 { color: var(--warning); }
+        .led-icon-3 { color: var(--danger); }
+
+        .led-status {
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        .led-status.on {
+            background-color: rgba(6, 214, 160, 0.15);
+            color: var(--success);
+        }
+
+        .led-status.off {
+            background-color: rgba(239, 71, 111, 0.15);
+            color: var(--danger);
+        }
+
+        .led-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        .led-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: rgba(0, 0, 0, 0.2);
+        }
+
+        .led-circle.on-1 {
+            background-color: var(--success);
+            box-shadow: 0 0 20px rgba(6, 214, 160, 0.5);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .led-circle.on-2 {
+            background-color: var(--warning);
+            box-shadow: 0 0 20px rgba(255, 209, 102, 0.5);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .led-circle.on-3 {
+            background-color: var(--danger);
+            box-shadow: 0 0 20px rgba(239, 71, 111, 0.5);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-on {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-off {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .message-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .message {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            background-color: var(--white);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideIn 0.3s forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .message-success {
+            border-left: 4px solid var(--success);
+        }
+
+        .message-error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .message-info {
+            border-left: 4px solid var(--info);
+        }
+
+        footer {
+            background-color: var(--white);
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-top: auto;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .footer-content {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                padding: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="navbar">
+                <div class="logo">
+                    <i class="fas fa-microchip"></i>
+                    <span>IoT LED Control</span>
+                </div>
+                <div id="time">00:00:00</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div id="connection-status" class="status-dot disconnected"></div>
+                <span id="status-text">Checking connection...</span>
+            </div>
+            <div id="last-command" style="margin-left: auto; font-size: 0.875rem; color: var(--gray);"></div>
+        </div>
+
+        <main>
+            <h1>LED Control Dashboard</h1>
+            
+            {% if message %}
+            <div id="message-display" class="message message-info">
+                <i class="fas fa-info-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endif %}
+
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-lightbulb led-icon led-icon-1"></i>
+                            <span>LED 1</span>
+                        </div>
+                        <div id="led1-status" class="led-status off">OFF</div>
+                    </div>
+                    <div class="led-visualization">
+                        <div id="led1-visual" class="led-circle">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                    </div>
+                    <form method="POST" action="/" class="card-actions">
+                        <button type="submit" name="command" value="on1" class="btn btn-on">
+                            <i class="fas fa-power-off"></i> On
+                        </button>
+                        <button type="submit" name="command" value="off1" class="btn btn-off">
+                            <i class="fas fa-power-off"></i> Off
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-lightbulb led-icon led-icon-2"></i>
+                            <span>LED 2</span>
+                        </div>
+                        <div id="led2-status" class="led-status off">OFF</div>
+                    </div>
+                    <div class="led-visualization">
+                        <div id="led2-visual" class="led-circle">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                    </div>
+                    <form method="POST" action="/" class="card-actions">
+                        <button type="submit" name="command" value="on2" class="btn btn-on">
+                            <i class="fas fa-power-off"></i> On
+                        </button>
+                        <button type="submit" name="command" value="off2" class="btn btn-off">
+                            <i class="fas fa-power-off"></i> Off
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-lightbulb led-icon led-icon-3"></i>
+                            <span>LED 3</span>
+                        </div>
+                        <div id="led3-status" class="led-status off">OFF</div>
+                    </div>
+                    <div class="led-visualization">
+                        <div id="led3-visual" class="led-circle">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                    </div>
+                    <form method="POST" action="/" class="card-actions">
+                        <button type="submit" name="command" value="on3" class="btn btn-on">
+                            <i class="fas fa-power-off"></i> On
+                        </button>
+                        <button type="submit" name="command" value="off3" class="btn btn-off">
+                            <i class="fas fa-power-off"></i> Off
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p class="footer-content">© 2025 IoT LED Control System | Connected to Arduino</p>
+        </div>
+    </footer>
+
+    <div id="message-container" class="message-container"></div>
+
+    <script>
+        // Update the clock
+        function updateClock() {
+            const now = new Date();
+            const timeElement = document.getElementById('time');
+            timeElement.textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Connection status simulation
+        function updateConnectionStatus() {
+            const statusDot = document.getElementById('connection-status');
+            const statusText = document.getElementById('status-text');
+            const isConnected = {% if message and 'failed' in message %}false{% else %}true{% endif %};
+            
+            if (isConnected) {
+                statusDot.classList.remove('disconnected');
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected to Arduino';
+            } else {
+                statusDot.classList.remove('connected');
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Disconnected';
+            }
+        }
+        updateConnectionStatus();
+
+        // Update LED status based on URL parameter or previous state
+        function updateLEDStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const command = urlParams.get('last_command');
+            
+            // First, load states from localStorage if available
+            for (let i = 1; i <= 3; i++) {
+                const savedState = localStorage.getItem(`led${i}State`);
+                if (savedState) {
+                    updateLEDVisual(i, savedState === 'true');
+                }
+            }
+            
+            // Then apply the latest command if present
+            if (command) {
+                const led = command.slice(-1);
+                const action = command.slice(0, -1);
+                const isOn = (action === 'on');
+                
+                // Update the state
+                updateLEDVisual(led, isOn);
+                
+                // Save state to localStorage
+                localStorage.setItem(`led${led}State`, isOn);
+                
+                document.getElementById('last-command').textContent = 
+                    `Last action: LED ${led} turned ${isOn ? 'ON' : 'OFF'}`;
+            }
+        }
+        
+        // Helper function to update LED visual state
+        function updateLEDVisual(ledNumber, isOn) {
+            const statusElement = document.getElementById(`led${ledNumber}-status`);
+            const visualElement = document.getElementById(`led${ledNumber}-visual`);
+            
+            if (isOn) {
+                statusElement.textContent = 'ON';
+                statusElement.classList.remove('off');
+                statusElement.classList.add('on');
+                visualElement.classList.add(`on-${ledNumber}`);
+            } else {
+                statusElement.textContent = 'OFF';
+                statusElement.classList.remove('on');
+                statusElement.classList.add('off');
+                visualElement.classList.remove(`on-${ledNumber}`);
+            }
+        }
+        updateLEDStatus();
+
+        // Process message display
+        function processMessage() {
+            const messageDisplay = document.getElementById('message-display');
+            if (messageDisplay) {
+                setTimeout(() => {
+                    messageDisplay.style.display = 'none';
+                }, 5000);
+            }
+        }
+        processMessage();
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('message-container');
+            const notification = document.createElement('div');
+            notification.className = `message message-${type}`;
+            
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            
+            notification.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 300);
+            }, 4000);
+        }
+
+        // Show notification for command result if available
+        // Initialize LED states based on server data if available
+        {% if led_states %}
+            const ledStates = {{ led_states|safe }};
+            for (const ledNum in ledStates) {
+                updateLEDVisual(ledNum, ledStates[ledNum]);
+                localStorage.setItem(`led${ledNum}State`, ledStates[ledNum]);
+            }
+        {% endif %}
+        
+        {% if message %}
+            {% if 'failed' in message %}
+                showNotification('{{ message }}', 'error');
+            {% else %}
+                showNotification('{{ message }}', 'success');
+            {% endif %}
+        {% endif %}
+    </script>
+</body>
+</html>
